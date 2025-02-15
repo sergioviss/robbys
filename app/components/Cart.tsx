@@ -1,5 +1,5 @@
 import { Product } from '../types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { printReceipt } from '../utils/printReceipt';
 
 interface CartItem extends Product {
@@ -18,16 +18,16 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  }, [cartItems]);
 
-  const calculateChange = () => {
+  const calculateChange = useCallback(() => {
     const total = calculateTotal();
     const paid = parseFloat(amountPaid);
     if (!paid || isNaN(paid)) return 0;
     return paid - total;
-  };
+  }, [amountPaid, calculateTotal]);
 
   const handleCompleteSale = async () => {
     const total = calculateTotal();
@@ -76,7 +76,7 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
       } else {
         setError('Error al procesar la venta');
       }
-    } catch (error) {
+    } catch {
       setError('Error al procesar la venta');
     } finally {
       setIsProcessing(false);
@@ -84,10 +84,11 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
   };
 
   useEffect(() => {
-    if (calculateChange() >= 0) {
+    const change = calculateChange();
+    if (change >= 0) {
       setError('');
     }
-  }, [amountPaid]);
+  }, [calculateChange]);
 
   return (
     <section className="bg-white p-4 rounded-lg shadow-md w-full lg:w-1/3 h-fit lg:sticky lg:top-4">

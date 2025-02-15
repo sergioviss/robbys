@@ -113,12 +113,6 @@ export default function Home() {
     });
   };
 
-  const removeFromCart = (productId: number) => {
-    setCartItems(currentItems =>
-      currentItems.filter(item => item.id !== productId)
-    );
-  };
-
   const updateQuantity = (productId: number, newQuantity: number) => {
     if (newQuantity < 1) {
       setCartItems(currentItems =>
@@ -232,7 +226,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-200 p-4">
       <header className="bg-gray-800 text-white p-4 text-center shadow-md">
-        <h1 className="text-3xl font-bold">Robby's Burger</h1>
+        <h1 className="text-3xl font-bold">Robby&apos;s Burger</h1>
         <p className="text-sm mt-2">
           {new Date().toLocaleDateString('es-ES', {
             weekday: 'long',

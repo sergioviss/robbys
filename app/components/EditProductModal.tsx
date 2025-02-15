@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Product {
   id: number;
@@ -13,9 +13,19 @@ interface EditProductModalProps {
 }
 
 export default function EditProductModal({ product, onClose, onSubmit }: EditProductModalProps) {
-  if (!product) return null;
+  const [editedProduct, setEditedProduct] = useState<Product>({
+    id: 0,
+    name: '',
+    price: 0
+  });
 
-  const [editedProduct, setEditedProduct] = useState({ ...product });
+  useEffect(() => {
+    if (product) {
+      setEditedProduct(product);
+    }
+  }, [product]);
+
+  if (!product) return null;
 
   return (
     <div 
