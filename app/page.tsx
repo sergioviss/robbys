@@ -215,7 +215,14 @@ export default function Home() {
     }
 
     try {
-        generateDailyReport(todaysSales);
+        generateDailyReport(todaysSales.map(sale => ({
+            id: sale.id.toString(),
+            timestamp: new Date(sale.timestamp),
+            items: sale.items,
+            total: sale.total,
+            amountPaid: sale.amount_paid,
+            change: sale.change
+        })));
     } catch (error) {
         console.error('Error al generar el reporte:', error);
         alert('Error al generar el reporte del día.');
