@@ -143,4 +143,117 @@ export function printReceipt(sale: SaleData) {
     console.error('Error creating receipt:', error);
     alert('Error al generar el ticket. Por favor, revise si tiene bloqueados los popups.');
   }
-} 
+}
+
+export const generateDailyReport = (sales: SaleData[]) => {
+    const closeReceipt = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Corte de Caja - Robby's Burger</title>
+            <style>
+                @page {
+                    size: letter;
+                    margin: 2cm;
+                }
+                body {
+                    font-family: 'Arial', sans-serif;
+                    padding: 20px;
+                    max-width: 21.59cm;
+                    margin: 0 auto;
+                    font-size: 12pt;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    padding: 20px 0;
+                    border-bottom: 3px solid #000;
+                }
+                .business-name {
+                    font-size: 2.5em;
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                }
+                .sales-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                    page-break-inside: avoid;
+                }
+                .sales-table th, .sales-table td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 10pt;
+                }
+                .sales-table th {
+                    background-color: #f0f0f0;
+                    font-weight: bold;
+                }
+                .summary-footer {
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 2px solid #000;
+                    page-break-inside: avoid;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="business-name">Robby's Burger</div>
+                <h2>REPORTE DE CORTE DE CAJA</h2>
+                <p>Fecha: ${new Date().toLocaleDateString()}</p>
+                <p>Hora: ${new Date().toLocaleTimeString()}</p>
+            </div>
+            
+            <div class="sales">
+                <h3>Detalle de Ventas del Día:</h3>
+                <table class="sales-table">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Hora</th>
+                            <th>Productos</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sales.map(sale => `
+                            <tr>
+                                <td>#${sale.id}</td>
+                                <td>${new Date(sale.timestamp).toLocaleTimeString()}</td>
+                                <td>${sale.items.map(item => `${item.name} (${item.quantity})`).join(', ')}</td>
+                                <td>$${sale.total.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="summary-footer">
+                <h3>Resumen del Día</h3>
+                <p><strong>Total de ventas realizadas:</strong> ${sales.length}</p>
+                <p><strong>Total en caja:</strong> $${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}</p>
+                <p>Reporte generado el ${new Date().toLocaleDateString()} a las ${new Date().toLocaleTimeString()}</p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const reportWindow = window.open('', '_blank', 'width=800,height=1100');
+    if (!reportWindow) {
+        throw new Error('No se pudo abrir la ventana del reporte. Verifique que no tenga bloqueados los popups.');
+    }
+    
+    reportWindow.document.write(closeReceipt);
+    reportWindow.document.close();
+    
+    setTimeout(() => {
+        reportWindow.print();
+        reportWindow.onafterprint = function() {
+            reportWindow.close();
+        };
+    }, 1000);
+}; 
