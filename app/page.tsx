@@ -6,11 +6,16 @@ import Clock from './components/Clock';
 import ProductCard from './components/ProductCard';
 import AddProductModal from './components/AddProductModal';
 import EditProductModal from './components/EditProductModal';
+import Cart from './components/Cart';
 
 interface Product {
   id: number;
   name: string;
   price: number;
+}
+
+interface CartItem extends Product {
+  quantity: number;
 }
 
 export default function Home() {
@@ -21,6 +26,7 @@ export default function Home() {
     name: '',
     price: 0
   });
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('products').select('*');
@@ -63,6 +69,54 @@ export default function Home() {
     else fetchProducts();
   };
 
+  const addToCart = (product: Product) => {
+    setCartItems(currentItems => {
+      const existingItem = currentItems.find(item => item.id === product.id);
+      
+      if (existingItem) {
+        return currentItems.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      
+      return [...currentItems, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (productId: number) => {
+    setCartItems(currentItems =>
+      currentItems.filter(item => item.id !== productId)
+    );
+  };
+
+  const updateQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity < 1) {
+      setCartItems(currentItems =>
+        currentItems.filter(item => item.id !== productId)
+      );
+      return;
+    }
+    
+    setCartItems(currentItems =>
+      currentItems.map(item =>
+        item.id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  const completeSale = () => {
+    alert('Venta completada');
+    setCartItems([]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-200 p-4">
       <header className="bg-gray-800 text-white p-4 text-center shadow-md">
@@ -76,8 +130,8 @@ export default function Home() {
         </p>
       </header>
 
-      <div className="container mx-auto mt-4">
-        <section className="bg-white p-4 rounded-lg shadow-md max-w-4xl mx-auto">
+      <div className="container mx-auto mt-4 flex flex-col lg:flex-row gap-4">
+        <section className="bg-white p-4 rounded-lg shadow-md w-full lg:w-2/3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-black">Menú</h2>
             <button 
@@ -87,32 +141,40 @@ export default function Home() {
               Agregar Nuevo Producto
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {products.map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onEdit={setEditingProduct}
                 onDelete={deleteProduct}
+                onAddToCart={addToCart}
               />
             ))}
           </div>
         </section>
 
-        <AddProductModal
-          show={showAddProduct}
-          onClose={() => setShowAddProduct(false)}
-          onSubmit={addProduct}
-          product={newProduct}
-          onProductChange={setNewProduct}
-        />
-
-        <EditProductModal
-          product={editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSubmit={updateProduct}
+        <Cart 
+          cartItems={cartItems}
+          updateQuantity={updateQuantity}
+          completeSale={completeSale}
+          clearCart={() => setCartItems([])}
         />
       </div>
+
+      <AddProductModal
+        show={showAddProduct}
+        onClose={() => setShowAddProduct(false)}
+        onSubmit={addProduct}
+        product={newProduct}
+        onProductChange={setNewProduct}
+      />
+
+      <EditProductModal
+        product={editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onSubmit={updateProduct}
+      />
     </div>
   );
 }
