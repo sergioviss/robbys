@@ -1,5 +1,6 @@
 import { Product } from '../types';
 import { useState, useEffect } from 'react';
+import { printReceipt } from '../utils/printReceipt';
 
 interface CartItem extends Product {
   quantity: number;
@@ -56,6 +57,20 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
       const data = await response.json();
 
       if (data.success) {
+        // Imprimir el recibo con los datos de la venta
+        printReceipt({
+          id: data.saleId,
+          timestamp: new Date(),
+          items: cartItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total,
+          amountPaid: paid,
+          change: calculateChange()
+        });
+        
         completeSale();
         setAmountPaid('');
       } else {
