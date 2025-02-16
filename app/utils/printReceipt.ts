@@ -203,9 +203,13 @@ export const generateDailyReport = (sales: SaleData[]) => {
         <body>
             <div class="header">
                 <div class="business-name">Robby's Burger</div>
-                <h2>REPORTE DE CORTE DE CAJA</h2>
-                <p>Fecha: ${new Date().toLocaleDateString()}</p>
-                <p>Hora: ${new Date().toLocaleTimeString()}</p>
+                <h2>REPORTE DE CORTE DE CAJA DEL DÍA</h2>
+                <p>Fecha: ${new Date(sales[0].timestamp).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    timeZone: 'America/Mexico_City'
+                })}</p>
             </div>
             
             <div class="sales">
@@ -223,7 +227,11 @@ export const generateDailyReport = (sales: SaleData[]) => {
                         ${sales.map(sale => `
                             <tr>
                                 <td>#${sale.id}</td>
-                                <td>${new Date(sale.timestamp).toLocaleTimeString()}</td>
+                                <td>${new Date(sale.timestamp).toLocaleString('es-ES', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    timeZone: 'America/Mexico_City'
+                                })}</td>
                                 <td>${sale.items.map(item => `${item.name} (${item.quantity})`).join(', ')}</td>
                                 <td>$${sale.total.toFixed(2)}</td>
                             </tr>

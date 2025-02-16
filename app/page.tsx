@@ -134,12 +134,11 @@ export default function Home() {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const completeSale = async () => {
+  const completeSale = async (amountPaid: number) => {
     const total = calculateTotal();
-    const amountPaid = parseFloat(prompt(`Total a pagar: $${total.toFixed(2)}\nIngrese el monto recibido:`) || '0');
     
     if (isNaN(amountPaid) || amountPaid < total) {
-      alert('Monto inválido o insuficiente');
+      alert(`Monto inválido o insuficiente, monto a pagar: $${total.toFixed(2)}\nmonto pagado: $${amountPaid.toFixed(2)}`);
       return;
     }
 
@@ -192,31 +191,50 @@ export default function Home() {
 
   const filteredSales = sales.filter(sale => {
     if (!selectedDate) return true;
-    const saleDate = new Date(sale.timestamp).toISOString().split('T')[0];
-    return saleDate === selectedDate;
+    
+    // Convertir la fecha de la venta a la zona horaria local
+    const saleDate = new Date(sale.timestamp);
+    const localSaleDate = new Date(saleDate.getTime() - saleDate.getTimezoneOffset() * 60000);
+    const saleDateString = localSaleDate.toISOString().split('T')[0];
+    
+    return saleDateString === selectedDate;
   });
 
   const generateDailyClose = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const todaysSales = sales.filter(sale => {
-        const saleDate = new Date(sale.timestamp).toISOString().split('T')[0];
-        return saleDate === today;
+    if (!selectedDate) {
+        alert('Por favor selecciona una fecha para generar el corte.');
+        return;
+    }
+    
+    const selectedSales = sales.filter(sale => {
+        const saleDate = new Date(sale.timestamp);
+        const localSaleDate = new Date(saleDate.getTime() - saleDate.getTimezoneOffset() * 60000);
+        const saleDateString = localSaleDate.toISOString().split('T')[0];
+        return saleDateString === selectedDate;
     });
 
-    if (todaysSales.length === 0) {
-        alert('No hay ventas registradas para el día de hoy.');
+    if (selectedSales.length === 0) {
+        alert('No hay ventas registradas para la fecha seleccionada.');
         return;
     }
 
     try {
-        generateDailyReport(todaysSales.map(sale => ({
-            id: sale.id.toString(),
-            timestamp: new Date(sale.timestamp),
-            items: sale.items,
-            total: sale.total,
-            amountPaid: sale.amount_paid,
-            change: sale.change
-        })));
+        generateDailyReport(selectedSales.map(sale => {
+            // Mantener la hora original pero ajustar la fecha
+            const originalDate = new Date(sale.timestamp);
+            const [year, month, day] = selectedDate.split('-').map(Number);
+            const adjustedDate = new Date(originalDate);
+            adjustedDate.setFullYear(year, month - 1, day);
+
+            return {
+                id: sale.id.toString(),
+                timestamp: adjustedDate,
+                items: sale.items,
+                total: sale.total,
+                amountPaid: sale.amount_paid,
+                change: sale.change
+            };
+        }));
     } catch (error) {
         console.error('Error al generar el reporte:', error);
         alert('Error al generar el reporte del día.');
@@ -292,7 +310,15 @@ export default function Home() {
                 className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600"
               >
                 <i className="fa-solid fa-file-pdf mr-2"></i>
-                Generar Corte del Día
+                {selectedDate 
+                    ? `Generar Corte del ${new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        timeZone: 'America/Mexico_City'
+                      })}`
+                    : 'Selecciona una fecha'
+                }
               </button>
               <input
                 type="date"
@@ -326,12 +352,13 @@ export default function Home() {
                   <tr key={sale.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">{sale.id}</td>
                     <td className="px-4 py-3">
-                      {new Date(sale.timestamp).toLocaleDateString('es-ES', {
+                      {new Date(sale.timestamp).toLocaleString('es-ES', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        timeZone: 'America/Mexico_City'
                       })}
                     </td>
                     <td className="px-4 py-3">
@@ -366,10 +393,10 @@ export default function Home() {
               {filteredSales.length > 0 && (
                 <tfoot>
                   <tr className="bg-gray-100">
-                    <td colSpan={4} className="px-4 py-3 font-bold text-right">
+                    <td colSpan={4} className="px-4 py-3 font-bold text-right text-black">
                       Total del día:
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">
+                    <td className="px-4 py-3 text-right font-bold text-black">
                       ${filteredSales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
                     </td>
                   </tr>

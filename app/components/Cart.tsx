@@ -9,7 +9,7 @@ interface CartItem extends Product {
 interface CartProps {
   cartItems: CartItem[];
   updateQuantity: (productId: number, newQuantity: number) => void;
-  completeSale: () => void;
+  completeSale: (amountPaid: number) => void;
   clearCart: () => void;
 }
 
@@ -31,10 +31,10 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
 
   const handleCompleteSale = async () => {
     const total = calculateTotal();
-    const paid = parseFloat(amountPaid);
+    const amount = parseFloat(amountPaid);
 
-    if (!paid || paid < total) {
-      setError('El monto pagado debe ser mayor o igual al total');
+    if (isNaN(amount) || amount < total) {
+      setError('Monto inválido o insuficiente');
       return;
     }
 
@@ -42,44 +42,26 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
     setError('');
 
     try {
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          items: cartItems,
-          total,
-          amountPaid: paid,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
         // Imprimir el recibo con los datos de la venta
         printReceipt({
-          id: data.saleId,
-          timestamp: new Date(),
-          items: cartItems.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          total,
-          amountPaid: paid,
-          change: calculateChange()
+            id: Date.now().toString(), // ID temporal para el recibo
+            timestamp: new Date(),
+            items: cartItems.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            })),
+            total,
+            amountPaid: amount,
+            change: calculateChange()
         });
         
-        completeSale();
+        completeSale(amount);
         setAmountPaid('');
-      } else {
+    } catch (error) {
         setError('Error al procesar la venta');
-      }
-    } catch {
-      setError('Error al procesar la venta');
     } finally {
-      setIsProcessing(false);
+        setIsProcessing(false);
     }
   };
 
