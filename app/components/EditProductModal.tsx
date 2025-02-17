@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { ProductType } from '../types';
 
 interface Product {
   id: number;
   name: string;
   price: number;
+  tipo: ProductType;
 }
 
 interface EditProductModalProps {
@@ -16,7 +18,8 @@ export default function EditProductModal({ product, onClose, onSubmit }: EditPro
   const [editedProduct, setEditedProduct] = useState<Product>({
     id: 0,
     name: '',
-    price: 0
+    price: 0,
+    tipo: ProductType.TORTA
   });
 
   useEffect(() => {
@@ -55,6 +58,17 @@ export default function EditProductModal({ product, onClose, onSubmit }: EditPro
               className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Precio"
             />
+            <select
+              value={editedProduct.tipo}
+              onChange={(e) => setEditedProduct({ ...editedProduct, tipo: e.target.value as ProductType })}
+              className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={ProductType.TORTA}>Torta</option>
+              <option value={ProductType.HAMBURGUESA}>Hamburguesa</option>
+              <option value={ProductType.ANTOJITOS}>Antojitos</option>
+              <option value={ProductType.PROMO}>Promo</option>
+              <option value={ProductType.ENVIO}>Envio</option>
+            </select>
           </div>
           <div className="flex justify-between mt-6">
             <button 

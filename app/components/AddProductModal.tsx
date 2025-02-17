@@ -1,14 +1,17 @@
+import { ProductType } from '../types';  // Asumiendo que moveremos el enum a un archivo de tipos
+
 interface Product {
   name: string;
   price: number;
+  tipo: ProductType;
 }
 
 interface AddProductModalProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (product: Product) => void;
-  product: Product;
-  onProductChange: (product: Product) => void;
+  onSubmit: (product: Omit<Product, 'id'>) => void;
+  product: Omit<Product, 'id'>;
+  onProductChange: (product: Omit<Product, 'id'>) => void;
 }
 
 export default function AddProductModal({ 
@@ -48,6 +51,17 @@ export default function AddProductModal({
               className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Precio"
             />
+            <select
+              value={product.tipo}
+              onChange={(e) => onProductChange({ ...product, tipo: e.target.value as ProductType })}
+              className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={ProductType.TORTA}>Torta</option>
+              <option value={ProductType.HAMBURGUESA}>Hamburguesa</option>
+              <option value={ProductType.ANTOJITOS}>Antojitos</option>
+              <option value={ProductType.PROMO}>Promo</option>
+              <option value={ProductType.ENVIO}>Envio</option>
+            </select>
           </div>
           <div className="flex justify-between mt-6">
             <button 

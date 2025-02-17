@@ -8,12 +8,7 @@ import AddProductModal from './components/AddProductModal';
 import EditProductModal from './components/EditProductModal';
 import Cart from './components/Cart';
 import { printReceipt, generateDailyReport } from "@/app/utils/printReceipt";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-}
+import { Product, ProductType } from './types';
 
 interface CartItem extends Product {
   quantity: number;
@@ -34,7 +29,8 @@ export default function Home() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
     name: '',
-    price: 0
+    price: 0,
+    tipo: ProductType.TORTA
   });
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -43,9 +39,16 @@ export default function Home() {
   );
 
   const fetchProducts = async () => {
+    console.log('Intentando conectar a Supabase...');
     const { data, error } = await supabase.from('products').select('*');
-    if (error) console.error("Error fetching products:", error);
-    else setProducts(data || []);
+    
+    if (error) {
+      console.error("Error fetching products:", error);
+      return;
+    }
+    
+    console.log('Respuesta de Supabase:', { data, error });
+    setProducts(data || []);
   };
 
   const fetchSales = async () => {
@@ -67,16 +70,27 @@ export default function Home() {
   }, []);
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
-    const { error } = await supabase.from('products').insert([product]);
-    if (error) console.error("Error adding product:", error);
-    else {
-      fetchProducts();
-      setShowAddProduct(false);
-      setNewProduct({
-        name: '',
-        price: 0
-      });
+    console.log('Intentando agregar producto:', product);
+    
+    const { data, error } = await supabase
+      .from('products')
+      .insert([product])
+      .select();  // Agregamos .select() para ver la respuesta
+      
+    if (error) {
+      console.error("Error adding product:", error.message, error.details);
+      alert(`Error al agregar producto: ${error.message}`);
+      return;
     }
+    
+    console.log('Producto agregado exitosamente:', data);
+    fetchProducts();
+    setShowAddProduct(false);
+    setNewProduct({
+      name: '',
+      price: 0,
+      tipo: ProductType.TORTA
+    });
   };
 
   const updateProduct = async (product: Product) => {
@@ -265,16 +279,85 @@ export default function Home() {
               Agregar Nuevo Producto
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {products.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onEdit={setEditingProduct}
-                onDelete={deleteProduct}
-                onAddToCart={addToCart}
-              />
-            ))}
+          
+          <div className="space-y-6">
+            {Object.values(ProductType).map(tipo => {
+              const productsOfType = products.filter(product => product.tipo === tipo);
+              
+              if (productsOfType.length === 0) return null;
+
+              const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+                const ele = e.currentTarget;
+                const startPos = {
+                  left: ele.scrollLeft,
+                  x: e.clientX,
+                };
+
+                const handleMouseMove = (e: MouseEvent) => {
+                  const dx = e.clientX - startPos.x;
+                  ele.scrollLeft = startPos.left - dx;
+                };
+
+                const handleMouseUp = () => {
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              };
+              
+              return (
+                <div key={tipo} className="space-y-2">
+                  <h3 className="text-lg font-bold text-gray-800 border-b-2 border-gray-200 pb-2">
+                    {tipo}
+                  </h3>
+                  <div className="relative group">
+                    <button 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-r-lg p-2 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
+                        if (container) {
+                          container.scrollLeft -= 300;
+                        }
+                      }}
+                    >
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+
+                    <div 
+                      className="flex overflow-x-auto pb-4 scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
+                      onMouseDown={handleMouseDown}
+                    >
+                      <div className="flex gap-4 snap-x snap-mandatory h-fit">
+                        {productsOfType.map(product => (
+                          <div key={product.id} className="snap-start flex-none w-[190px]">
+                            <ProductCard
+                              product={product}
+                              onEdit={setEditingProduct}
+                              onDelete={deleteProduct}
+                              onAddToCart={addToCart}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button 
+                      className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-l-lg p-2 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
+                        if (container) {
+                          container.scrollLeft += 300;
+                        }
+                      }}
+                    >
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 

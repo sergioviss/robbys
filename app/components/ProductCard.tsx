@@ -1,11 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-}
+import { Product, ProductType } from '../types';
 
 interface ProductCardProps {
   product: Product;
@@ -24,7 +19,7 @@ export default function ProductCard({ product, onEdit, onDelete, onAddToCart }: 
 
   return (
     <div 
-      className="bg-gray-100 rounded-lg shadow-md p-4 flex flex-col hover:bg-blue-500 hover:text-white transition-colors group cursor-pointer"
+      className="bg-gray-100 rounded-lg shadow-md p-4 flex flex-col hover:bg-blue-500 hover:text-white transition-colors group cursor-pointer h-full"
       onClick={handleCardClick}
     >
       <div className="flex-grow text-center">
