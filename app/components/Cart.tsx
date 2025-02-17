@@ -59,7 +59,7 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
         completeSale(amount);
         setAmountPaid('');
     } catch (error) {
-        setError('Error al procesar la venta');
+        setError('Error al procesar la venta'+ error);
     } finally {
         setIsProcessing(false);
     }

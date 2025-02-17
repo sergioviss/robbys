@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Product, ProductType } from '../types';
-import { supabase } from '../../lib/supabaseClient';
 import { useState } from 'react';
 import ConfirmDialog from './ConfirmDialog';
 
