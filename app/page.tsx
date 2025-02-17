@@ -310,7 +310,7 @@ export default function Home() {
               return (
                 <div key={tipo} className="space-y-2">
                   <h3 className="text-lg font-bold text-gray-800 border-b-2 border-gray-200 pb-2">
-                    {tipo}
+                    {tipo.toUpperCase()}
                   </h3>
                   <div className="relative group">
                     <button 
@@ -334,6 +334,7 @@ export default function Home() {
                           <div key={product.id} className="snap-start flex-none w-[190px]">
                             <ProductCard
                               product={product}
+                              products={products}
                               onEdit={setEditingProduct}
                               onDelete={deleteProduct}
                               onAddToCart={addToCart}
