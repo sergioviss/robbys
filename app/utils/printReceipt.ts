@@ -40,8 +40,7 @@ export function printReceipt(sale: SaleData) {
                 margin-bottom: 10px;
             }
             .logo {
-                width: 100%;
-                max-width: 120px;
+                width: 60px;
                 height: auto;
                 margin: 0 auto;
                 display: block;
@@ -208,7 +207,7 @@ export const generateDailyReport = (sales: SaleData[]) => {
                     day: '2-digit',
                     month: '2-digit', 
                     year: 'numeric',
-                    timeZone: 'America/Mexico_City'
+                    timeZone: 'America/Los_Angeles'
                 })}</p>
             </div>
             
@@ -230,7 +229,7 @@ export const generateDailyReport = (sales: SaleData[]) => {
                                 <td>${new Date(sale.timestamp).toLocaleString('es-ES', {
                                     hour: '2-digit',
                                     minute: '2-digit',
-                                    timeZone: 'America/Mexico_City'
+                                    timeZone: 'America/Los_Angeles'
                                 })}</td>
                                 <td>${sale.items.map(item => `${item.name} (${item.quantity})`).join(', ')}</td>
                                 <td>$${sale.total.toFixed(2)}</td>

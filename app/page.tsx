@@ -399,7 +399,7 @@ export default function Home() {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
-                        timeZone: 'America/Mexico_City'
+                        timeZone: 'America/Los_Angeles'
                       })}`
                     : 'Selecciona una fecha'
                 }
@@ -442,7 +442,7 @@ export default function Home() {
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
-                        timeZone: 'America/Mexico_City'
+                        timeZone: 'America/Los_Angeles'
                       })}
                     </td>
                     <td className="px-4 py-3">
