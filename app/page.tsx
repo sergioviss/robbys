@@ -214,6 +214,22 @@ export default function Home() {
     return saleDateString === selectedDate;
   });
 
+  const getWeekSales = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Domingo
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(today.getDate() + (6 - today.getDay())); // Sábado
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return sales.filter(sale => {
+      const saleDate = new Date(sale.timestamp);
+      return saleDate >= startOfWeek && saleDate <= endOfWeek;
+    });
+  };
+
   const generateDailyClose = () => {
     if (!selectedDate) {
         alert('Por favor selecciona una fecha para generar el corte.');
@@ -474,9 +490,9 @@ export default function Home() {
                   </tr>
                 ))}
               </tbody>
-              {filteredSales.length > 0 && (
-                <tfoot>
-                  <tr className="bg-gray-100">
+              <tfoot>
+                {filteredSales.length > 0 && (
+                  <tr className="bg-gray-200">
                     <td colSpan={4} className="px-4 py-3 font-bold text-right text-black">
                       Total del día:
                     </td>
@@ -484,8 +500,16 @@ export default function Home() {
                       ${filteredSales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
                     </td>
                   </tr>
-                </tfoot>
-              )}
+                )}
+                <tr className="bg-gray-100">
+                  <td colSpan={4} className="px-4 py-3 font-bold text-right text-black">
+                    Total de la semana:
+                  </td>
+                  <td className="px-4 py-3 text-right font-bold text-black">
+                    ${getWeekSales().reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
             {filteredSales.length === 0 && (
               <p className="text-center py-4 text-gray-600">
