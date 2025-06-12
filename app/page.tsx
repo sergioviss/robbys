@@ -266,7 +266,7 @@ export default function Home() {
             };
         }));
     } catch (error) {
-        console.error('Error al generar el reporte:', error);
+        console.error('Error al generar el reporte', error);
         alert('Error al generar el reporte del día.');
     }
   };
