@@ -10,6 +10,20 @@ import Cart from './components/Cart';
 import { printReceipt, generateDailyReport } from "@/app/utils/printReceipt";
 import { Product, ProductType } from './types';
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 const TIMEZONE = 'America/Hermosillo';
 
 interface CartItem extends Product {
@@ -34,6 +48,7 @@ export default function Home() {
     price: 0,
     tipo: ProductType.TORTA
   });
+  const [selectedCategory, setSelectedCategory] = useState<ProductType | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -116,9 +131,6 @@ export default function Home() {
   };
 
   const deleteProduct = async (id: number) => {
-    const confirmed = window.confirm("¿Estás seguro que deseas eliminar este producto?");
-    if (!confirmed) return;
-
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) console.error("Error deleting product:", error);
     else fetchProducts();
@@ -285,138 +297,176 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 p-4">
-      <header className="bg-gray-800 text-white p-4 text-center shadow-md">
-        <h1 className="text-3xl font-bold">Robby&apos;s Burger</h1>
-        <p className="text-sm mt-2">
-          {currentDateFormatted || '---'} - <Clock />
-        </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-gray-800 text-white p-6 shadow-lg">
+        <div className="container mx-auto text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Robby&apos;s Burger</h1>
+          <p className="text-sm mt-2 opacity-90">
+            {currentDateFormatted || '---'} - <Clock />
+          </p>
+        </div>
       </header>
 
-      <div className="container mx-auto mt-4 flex flex-col lg:flex-row gap-4">
-        <section className="bg-white p-4 rounded-lg shadow-md w-full lg:w-2/3">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-black">Menú</h2>
-            <button
-              className="bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded hover:bg-blue-600"
-              onClick={() => setShowAddProduct(true)}
-            >
-              Agregar Nuevo Producto
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {Object.values(ProductType).map(tipo => {
-              const productsOfType = products.filter(product => product.tipo === tipo);
-
-              if (productsOfType.length === 0) return null;
-
-              const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-                const ele = e.currentTarget;
-                const startPos = {
-                  left: ele.scrollLeft,
-                  x: e.clientX,
-                };
-
-                const handleMouseMove = (e: MouseEvent) => {
-                  const dx = e.clientX - startPos.x;
-                  ele.scrollLeft = startPos.left - dx;
-                };
-
-                const handleMouseUp = () => {
-                  document.removeEventListener('mousemove', handleMouseMove);
-                  document.removeEventListener('mouseup', handleMouseUp);
-                };
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              };
-
-              return (
-                <div key={tipo} className="space-y-2">
-                  <h3 className="text-lg font-bold text-gray-800 border-b-2 border-gray-200 pb-2">
-                    {tipo.toUpperCase()}
-                  </h3>
-                  <div className="relative group">
-                    <button
-                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-r-lg p-2 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
-                        if (container) {
-                          container.scrollLeft -= 300;
-                        }
-                      }}
+      <main className="container mx-auto p-4 space-y-6">
+        {/* Menu and Cart Section */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Menu Section */}
+          <Card className="w-full lg:w-2/3 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div className="flex items-center gap-2">
+                {selectedCategory && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedCategory(null)}
+                    className="h-8 w-8 rounded-full hover:bg-muted -ml-2"
+                  >
+                    <i className="fas fa-arrow-left"></i>
+                  </Button>
+                )}
+                <CardTitle className="text-xl">Menú</CardTitle>
+              </div>
+              <Button onClick={() => setShowAddProduct(true)}>
+                Agregar Nuevo Producto
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!selectedCategory ? (
+                // Vista de Categorías
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+                  {Object.values(ProductType).map((tipo) => (
+                    <Button
+                      key={tipo}
+                      variant="outline"
+                      className="h-32 text-2xl font-bold uppercase transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground border-2"
+                      onClick={() => setSelectedCategory(tipo)}
                     >
-                      <i className="fas fa-chevron-left"></i>
-                    </button>
-
-                    <div
-                      className="flex overflow-x-auto pb-4 scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing"
-                      onMouseDown={handleMouseDown}
-                    >
-                      <div className="flex gap-4 snap-x snap-mandatory h-fit">
-                        {productsOfType.map(product => (
-                          <div key={product.id} className="snap-start flex-none w-[190px]">
-                            <ProductCard
-                              product={product}
-                              products={products}
-                              onEdit={setEditingProduct}
-                              onDelete={deleteProduct}
-                              onAddToCart={addToCart}
-                            />
-                          </div>
+                      {tipo}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                // Vista de Productos de la Categoría
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  {/* Navegación y Categorías */}
+                  <div className="flex flex-col gap-4 border-b pb-4">
+                    <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
+                      <div className="flex gap-2 min-w-max">
+                        {Object.values(ProductType).map((tipo) => (
+                          <Button
+                            key={tipo}
+                            variant={selectedCategory === tipo ? "default" : "outline"}
+                            className={`whitespace-nowrap h-14 text-lg px-6 font-bold uppercase ${selectedCategory === tipo ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                            onClick={() => setSelectedCategory(tipo)}
+                          >
+                            {tipo}
+                          </Button>
                         ))}
                       </div>
                     </div>
 
-                    <button
-                      className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-l-lg p-2 shadow-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
-                        if (container) {
-                          container.scrollLeft += 300;
-                        }
-                      }}
-                    >
-                      <i className="fas fa-chevron-right"></i>
-                    </button>
+                    <div className="flex justify-between items-center px-2">
+                      <h2 className="text-xl font-bold uppercase text-primary hidden sm:block">
+                        {selectedCategory}
+                      </h2>
+                      <Badge variant="secondary" className="text-sm px-3 py-1">
+                        {products.filter(p => p.tipo === selectedCategory).length} Productos
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 max-h-[65vh] overflow-y-auto pr-2 pb-20">
+                    {(() => {
+                      let displayProducts = products.filter(product => product.tipo === selectedCategory);
+
+                      if (selectedCategory === ProductType.TORTA || selectedCategory === ProductType.HAMBURGUESA) {
+                        displayProducts.sort((a, b) => b.name.localeCompare(a.name));
+                      }
+
+                      // Lógica de ordenamiento para PROMOs (mantenida del código original)
+                      if (selectedCategory === ProductType.PROMO) {
+                        const now = new Date();
+                        const dayOfWeek = now.toLocaleDateString('es-ES', {
+                          weekday: 'long',
+                          timeZone: TIMEZONE
+                        }).toLowerCase();
+
+                        const dayNames = ['lunes', 'martes', 'miércoles', 'miercoles', 'jueves'];
+                        const isPromoDay = dayNames.some(d => dayOfWeek.includes(d.replace('é', 'e')));
+
+                        displayProducts = [...displayProducts].sort((a, b) => {
+                          const aName = a.name.toLowerCase();
+                          const bName = b.name.toLowerCase();
+                          const aHasDay = dayNames.some(d => aName.includes(d));
+                          const bHasDay = dayNames.some(d => bName.includes(d));
+                          const aIsToday = aName.includes(dayOfWeek) ||
+                            (dayOfWeek.includes('miércoles') && aName.includes('miercoles')) ||
+                            (dayOfWeek.includes('miercoles') && aName.includes('miércoles'));
+                          const bIsToday = bName.includes(dayOfWeek) ||
+                            (dayOfWeek.includes('miércoles') && bName.includes('miercoles')) ||
+                            (dayOfWeek.includes('miercoles') && bName.includes('miércoles'));
+
+                          if (isPromoDay) {
+                            if (aIsToday && !bIsToday) return -1;
+                            if (bIsToday && !aIsToday) return 1;
+                          } else {
+                            if (aHasDay && !bHasDay) return 1;
+                            if (bHasDay && !aHasDay) return -1;
+                          }
+                          return 0;
+                        });
+                      }
+
+                      return displayProducts.map(product => (
+                        <div key={product.id} className="w-full">
+                          <ProductCard
+                            product={product}
+                            onEdit={setEditingProduct}
+                            onAddToCart={(p) => {
+                              addToCart(p);
+                            }}
+                          />
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
+              )}
+            </CardContent>
+          </Card>
 
-        <Cart
-          cartItems={cartItems}
-          updateQuantity={updateQuantity}
-          completeSale={completeSale}
-          clearCart={() => setCartItems([])}
+          <Cart
+            cartItems={cartItems}
+            updateQuantity={updateQuantity}
+            completeSale={completeSale}
+            clearCart={() => setCartItems([])}
+          />
+        </div>
+
+        <AddProductModal
+          show={showAddProduct}
+          onClose={() => setShowAddProduct(false)}
+          onSubmit={addProduct}
+          product={newProduct}
+          onProductChange={setNewProduct}
         />
-      </div>
 
-      <AddProductModal
-        show={showAddProduct}
-        onClose={() => setShowAddProduct(false)}
-        onSubmit={addProduct}
-        product={newProduct}
-        onProductChange={setNewProduct}
-      />
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSubmit={updateProduct}
+          onDelete={deleteProduct}
+        />
 
-      <EditProductModal
-        product={editingProduct}
-        onClose={() => setEditingProduct(null)}
-        onSubmit={updateProduct}
-      />
-
-      <div className="container mx-auto mt-8">
-        <section className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-black">Historial de Ventas</h2>
-            <div className="flex items-center gap-2">
-              <button
+        {/* Sales History Section */}
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+            <CardTitle className="text-xl">Historial de Ventas</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="default"
                 onClick={generateDailyClose}
-                className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600"
               >
                 <i className="fa-solid fa-file-pdf mr-2"></i>
                 {selectedDate
@@ -428,106 +478,115 @@ export default function Home() {
                   })}`
                   : 'Selecciona una fecha'
                 }
-              </button>
-              <input
+              </Button>
+              <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-2 border rounded-md text-gray-800"
+                className="w-auto"
               />
               {selectedDate && (
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setSelectedDate('')}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
                 >
                   Limpiar filtro
-                </button>
+                </Button>
               )}
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-800 text-white">
-                  <th className="px-4 py-3 text-left">ID</th>
-                  <th className="px-4 py-3 text-left">Fecha</th>
-                  <th className="px-4 py-3 text-left">Productos</th>
-                  <th className="px-4 py-3 text-right">Total</th>
-                  <th className="px-4 py-3 text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-800">
-                {filteredSales.map((sale) => (
-                  <tr key={sale.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">{sale.id}</td>
-                    <td className="px-4 py-3">
-                      {new Date(sale.timestamp).toLocaleString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: TIMEZONE
-                      })}
-                    </td>
-                    <td className="px-4 py-3">
-                      {sale.items.map(item =>
-                        `${item.name} (${item.quantity})`
-                      ).join(', ')}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium">
-                      ${sale.total.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => reprintTicket(sale)}
-                          className="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
-                          title="Reimprimir ticket"
-                        >
-                          <i className="fa-solid fa-print"></i> Reimprimir
-                        </button>
-                        <button
-                          onClick={() => deleteSale(sale.id)}
-                          className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
-                          title="Eliminar venta"
-                        >
-                          <i className="fa-solid fa-trash"></i> Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                {filteredSales.length > 0 && (
-                  <tr className="bg-gray-200">
-                    <td colSpan={4} className="px-4 py-3 font-bold text-right text-black">
-                      Total del día:
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-black">
-                      ${filteredSales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
-                    </td>
-                  </tr>
-                )}
-                <tr className="bg-gray-100">
-                  <td colSpan={4} className="px-4 py-3 font-bold text-right text-black">
-                    Total de la semana:
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold text-black">
-                    ${getWeekSales().reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-            {filteredSales.length === 0 && (
-              <p className="text-center py-4 text-gray-600">
-                No hay ventas {selectedDate ? 'para la fecha seleccionada' : 'registradas'}
-              </p>
-            )}
-          </div>
-        </section>
-      </div>
-    </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">ID</TableHead>
+                    <TableHead className="font-semibold">Fecha</TableHead>
+                    <TableHead className="font-semibold">Productos</TableHead>
+                    <TableHead className="font-semibold text-right">Total</TableHead>
+                    <TableHead className="font-semibold text-center">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No hay ventas {selectedDate ? 'para la fecha seleccionada' : 'registradas'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredSales.map((sale) => (
+                      <TableRow key={sale.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">{sale.id}</TableCell>
+                        <TableCell>
+                          {new Date(sale.timestamp).toLocaleString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: TIMEZONE
+                          })}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {sale.items.map(item =>
+                            `${item.name} (${item.quantity})`
+                          ).join(', ')}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-primary">
+                          ${sale.total.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => reprintTicket(sale)}
+                              title="Reimprimir ticket"
+                            >
+                              <i className="fa-solid fa-print mr-1"></i> Reimprimir
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteSale(sale.id)}
+                              title="Eliminar venta"
+                            >
+                              <i className="fa-solid fa-trash mr-1"></i> Eliminar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+                <TableFooter>
+                  {filteredSales.length > 0 && (
+                    <TableRow className="bg-primary/10">
+                      <TableCell colSpan={3} className="text-right font-bold">
+                        Total del día:
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-primary text-lg">
+                        ${filteredSales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow className="bg-green-100">
+                    <TableCell colSpan={3} className="text-right font-bold">
+                      Total de la semana:
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-green-600 text-lg">
+                      ${getWeekSales().reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </main >
+    </div >
   );
 }

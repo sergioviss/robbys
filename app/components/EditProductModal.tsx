@@ -1,5 +1,25 @@
+"use client";
+
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { ProductType } from '../types';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Product {
   id: number;
@@ -12,15 +32,17 @@ interface EditProductModalProps {
   product: Product | null;
   onClose: () => void;
   onSubmit: (product: Product) => void;
+  onDelete: (id: number) => void;
 }
 
-export default function EditProductModal({ product, onClose, onSubmit }: EditProductModalProps) {
+export default function EditProductModal({ product, onClose, onSubmit, onDelete }: EditProductModalProps) {
   const [editedProduct, setEditedProduct] = useState<Product>({
     id: 0,
     name: '',
     price: 0,
     tipo: ProductType.TORTA
   });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -28,65 +50,100 @@ export default function EditProductModal({ product, onClose, onSubmit }: EditPro
     }
   }, [product]);
 
-  if (!product) return null;
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (product) {
+      onDelete(product.id);
+      setShowDeleteConfirm(false);
+      onClose();
+    }
+  };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold mb-6 text-black text-center">Editar Producto</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(editedProduct);
-        }}>
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={editedProduct.name}
-              onChange={(e) => setEditedProduct({ ...editedProduct, name: e.target.value })}
-              className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre del Producto"
-            />
-            <input
-              type="number"
-              value={editedProduct.price}
-              onChange={(e) => setEditedProduct({ ...editedProduct, price: parseFloat(e.target.value) })}
-              className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Precio"
-            />
-            <select
-              value={editedProduct.tipo}
-              onChange={(e) => setEditedProduct({ ...editedProduct, tipo: e.target.value as ProductType })}
-              className="border border-gray-300 rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={ProductType.TORTA}>Torta</option>
-              <option value={ProductType.HAMBURGUESA}>Hamburguesa</option>
-              <option value={ProductType.ANTOJITOS}>Antojitos</option>
-              <option value={ProductType.PROMO}>Promo</option>
-              <option value={ProductType.ENVIO}>Envio</option>
-            </select>
-          </div>
-          <div className="flex justify-between mt-6">
-            <button 
-              type="button" 
-              className="bg-gray-500 text-white py-2 px-6 rounded hover:bg-gray-600 transition-colors" 
-              onClick={onClose}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className="bg-green-500 text-white py-2 px-6 rounded hover:bg-green-600 transition-colors"
-            >
-              Guardar Cambios
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <>
+      <Dialog open={!!product} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Editar Producto</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit(editedProduct);
+          }}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nombre del Producto</label>
+                <Input
+                  type="text"
+                  value={editedProduct.name}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, name: e.target.value })}
+                  placeholder="Nombre del Producto"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Precio</label>
+                <Input
+                  type="number"
+                  value={editedProduct.price}
+                  onChange={(e) => setEditedProduct({ ...editedProduct, price: parseFloat(e.target.value) })}
+                  placeholder="Precio"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select
+                  value={editedProduct.tipo}
+                  onValueChange={(value) => setEditedProduct({ ...editedProduct, tipo: value as ProductType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ProductType.TORTA}>Torta</SelectItem>
+                    <SelectItem value={ProductType.HAMBURGUESA}>Hamburguesa</SelectItem>
+                    <SelectItem value={ProductType.ANTOJITOS}>Antojitos</SelectItem>
+                    <SelectItem value={ProductType.PROMO}>Promo</SelectItem>
+                    <SelectItem value={ProductType.ENVIO}>Envio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="flex-col gap-3 sm:flex-col">
+              <div className="flex justify-between w-full gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onClose}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Guardar Cambios
+                </Button>
+              </div>
+            </DialogFooter>
+            <div className="mt-6 pt-4 border-t border-dashed">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-destructive transition-colors w-full text-center"
+                onClick={handleDelete}
+              >
+                Eliminar este producto
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        message="¿Estás seguro que deseas eliminar este producto?"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+    </>
   );
-} 
+}

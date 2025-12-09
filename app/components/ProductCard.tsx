@@ -1,102 +1,69 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Product, ProductType } from '../types';
-import { useState } from 'react';
-import ConfirmDialog from './ConfirmDialog';
+"use client";
+
+import { Product } from '../types';
+import { useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ProductCardProps {
   product: Product;
-  products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (id: number) => void;
   onAddToCart: (product: Product) => void;
 }
 
-export default function ProductCard({ product, products, onEdit, onDelete, onAddToCart }: ProductCardProps) {
-  const [showFriesDialog, setShowFriesDialog] = useState(false);
-  const [showDoubleDialog, setShowDoubleDialog] = useState(false);
+export default function ProductCard({ product, onEdit, onAddToCart }: ProductCardProps) {
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
 
-  const handleCardClick = async (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).closest('.action-buttons')) {
-      if (product.tipo === ProductType.TORTA && !product.name.toLowerCase().includes('papas')) {
-        setShowFriesDialog(true);
-      } else if (product.tipo === ProductType.HAMBURGUESA  && !product.name.toLowerCase().includes('doble carne')) {
-        setShowDoubleDialog(true);
-      } else {
-        onAddToCart(product);
-      }
+  const handlePressStart = () => {
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      onEdit(product);
+    }, 500); // 500ms para long press
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   };
 
-  const handleFriesConfirm = () => {
-    onAddToCart(product);
-    const friesProduct = products.find(p => p.id === 15);
-    if (friesProduct) {
-      onAddToCart(friesProduct);
+  const handleClick = () => {
+    // Solo agregar al carrito si no fue un long press
+    if (!isLongPress.current) {
+      onAddToCart(product);
     }
-    setShowFriesDialog(false);
-  };
-
-  const handleDoubleConfirm = () => {
-    onAddToCart(product);
-    const doubleProduct = products.find(p => p.id === 16);
-    if (doubleProduct) {
-      onAddToCart(doubleProduct);
-    }
-    setShowDoubleDialog(false);
-  };
-
-  const handleFriesCancel = () => {
-    onAddToCart(product);
-    setShowFriesDialog(false);
-  };
-
-  const handleDoubleCancel = () => {
-    onAddToCart(product);
-    setShowDoubleDialog(false);
   };
 
   return (
     <>
-      <div 
-        className="bg-gray-100 rounded-lg shadow-md p-4 flex flex-col hover:bg-blue-500 transition-colors group cursor-pointer h-full"
-        onClick={handleCardClick}
+      <Card
+        className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/50 h-[160px] group select-none bg-muted"
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressEnd}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onClick={handleClick}
       >
-        <div className="flex-grow text-center">
-          <h3 className="text-xl font-bold text-black mb-2">{product.name}</h3>
-          <p className="text-black font-semibold mb-4">${product.price.toFixed(2)}</p>
-        </div>
-        <div className="flex gap-2 action-buttons">
-          <button 
-            className="flex-1 bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 transition-colors text-sm" 
-            onClick={() => onEdit(product)}
-            title="Editar"
-          >
-            <FontAwesomeIcon icon={faPen}/>
-          </button>
-          <button 
-            className="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition-colors text-sm" 
-            onClick={() => onDelete(product.id)}
-            title="Eliminar"
-          >
-            <FontAwesomeIcon icon={faTrash}/>
-          </button>
-        </div>
-      </div>
-
-      <ConfirmDialog
-        isOpen={showFriesDialog}
-        message="¿Con papas?"
-        onConfirm={handleFriesConfirm}
-        onCancel={handleFriesCancel}
-      />
-
-      <ConfirmDialog
-        isOpen={showDoubleDialog}
-        message="¿Doble Carne?"
-        onConfirm={handleDoubleConfirm}
-        onCancel={handleDoubleCancel}
-      />
+        <CardContent className="p-4 flex flex-col justify-between h-full">
+          <h3 className="text-base font-bold text-center group-hover:text-primary transition-colors">
+            {product.name.split(/(con papas|doble carne)/i).map((part, index) => (
+              ['con papas', 'doble carne'].includes(part.toLowerCase()) ? (
+                <span key={index} className="block text-blue-800 uppercase text-lg mt-1">
+                  {part}
+                </span>
+              ) : (
+                <span key={index}>{part}</span>
+              )
+            ))}
+          </h3>
+          <p className="text-2xl font-bold text-center text-foreground">
+            ${product.price.toFixed(2)}
+          </p>
+        </CardContent>
+      </Card>
     </>
   );
-} 
+}

@@ -1,6 +1,12 @@
+"use client";
+
 import { Product } from '../types';
 import { useState, useEffect, useCallback } from 'react';
 import { printReceipt } from '../utils/printReceipt';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 
 interface CartItem extends Product {
   quantity: number;
@@ -42,26 +48,26 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
     setError('');
 
     try {
-        // Imprimir el recibo con los datos de la venta
-        printReceipt({
-            id: Date.now().toString(), // ID temporal para el recibo
-            timestamp: new Date(),
-            items: cartItems.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price
-            })),
-            total,
-            amountPaid: amount,
-            change: calculateChange()
-        });
-        
-        completeSale(amount);
-        setAmountPaid('');
+      // Imprimir el recibo con los datos de la venta
+      printReceipt({
+        id: Date.now().toString(), // ID temporal para el recibo
+        timestamp: new Date(),
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total,
+        amountPaid: amount,
+        change: calculateChange()
+      });
+
+      completeSale(amount);
+      setAmountPaid('');
     } catch (error) {
-        setError('Error al procesar la venta'+ error);
+      setError('Error al procesar la venta' + error);
     } finally {
-        setIsProcessing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -73,84 +79,104 @@ export default function Cart({ cartItems, updateQuantity, completeSale, clearCar
   }, [calculateChange]);
 
   return (
-    <section className="bg-white p-4 rounded-lg shadow-md w-full lg:w-1/3 h-fit lg:sticky lg:top-4">
-      <h2 className="text-xl font-bold text-black mb-4">Cuenta Actual</h2>
-      <div className="space-y-2">
-        {cartItems.map(item => (
-          <div key={item.id} className="flex justify-between items-center p-2 border-b">
-            <div className="flex-1">
-              <h3 className="font-semibold text-black">{item.name}</h3>
-              <p className="text-black">${item.price.toFixed(2)}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-              >
-                -
-              </button>
-              <span className="text-black w-8 text-center">{item.quantity}</span>
-              <button 
-                className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-              >
-                +
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 border-t pt-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-black">Total:</h3>
-          <span className="text-xl font-bold text-black">${calculateTotal().toFixed(2)}</span>
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Monto Pagado
-          </label>
-          <input
-            type="number"
-            value={amountPaid}
-            onChange={(e) => setAmountPaid(e.target.value)}
-            className="w-full p-2 border rounded-md text-black"
-            placeholder="Ingrese el monto pagado"
-          />
-        </div>
-
-        {amountPaid && (
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-black">Cambio:</h3>
-            <span className={`text-xl font-bold ${calculateChange() < 0 ? 'text-red-500' : 'text-green-500'}`}>
-              ${calculateChange().toFixed(2)}
-            </span>
-          </div>
-        )}
-
-        {error && (
-          <div className="text-red-500 text-sm mb-2">
-            {error}
-          </div>
-        )}
-
+    <Card className="w-full lg:w-1/3 h-fit lg:sticky lg:top-4 shadow-lg">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl">Cuenta Actual</CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-2">
-          <button 
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors text-sm font-bold disabled:bg-gray-400"
-            onClick={handleCompleteSale}
-            disabled={isProcessing || !amountPaid || cartItems.length === 0 || calculateChange() < 0}
-          >
-            {isProcessing ? 'Procesando...' : 'Completar Venta'}
-          </button>
-          <button 
-            className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors text-sm font-bold"
-            onClick={clearCart}
-            disabled={isProcessing}
-          >
-            Cancelar Venta
-          </button>
+          {cartItems.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              No hay productos en la cuenta
+            </p>
+          ) : (
+            cartItems.map(item => (
+              <div key={item.id} className="flex justify-between items-center p-3 bg-secondary/50 rounded-lg">
+                <div className="flex-1">
+                  <h3 className="font-semibold">{item.name}</h3>
+                  <p className="text-primary font-medium">${item.price.toFixed(2)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                  >
+                    -
+                  </Button>
+                  <span className="w-8 text-center font-medium">{item.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      </div>
-    </section>
+
+        <Separator className="my-4" />
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold">Total:</h3>
+            <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Monto Pagado
+            </label>
+            <Input
+              type="number"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              placeholder="Ingrese el monto pagado"
+              className="text-lg"
+            />
+          </div>
+
+          {amountPaid && (
+            <div className="flex justify-between items-center p-3 rounded-lg bg-secondary/50">
+              <h3 className="text-lg font-bold">Cambio:</h3>
+              <span className={`text-2xl font-bold ${calculateChange() < 0 ? 'text-destructive' : 'text-green-600'}`}>
+                ${calculateChange().toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-destructive text-sm font-medium bg-destructive/10 p-2 rounded">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleCompleteSale}
+              disabled={isProcessing || !amountPaid || cartItems.length === 0 || calculateChange() < 0}
+            >
+              {isProcessing ? 'Procesando...' : 'Completar Venta'}
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full"
+              size="lg"
+              onClick={clearCart}
+              disabled={isProcessing || cartItems.length === 0}
+            >
+              Cancelar Venta
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
-} 
+}

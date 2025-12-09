@@ -1,20 +1,20 @@
 // import logo from '@/public/LOGO.png';
 
 interface SaleData {
-  id: string;
-  timestamp: Date;
-  items: {
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  total: number;
-  amountPaid: number;
-  change: number;
+    id: string;
+    timestamp: Date;
+    items: {
+        name: string;
+        quantity: number;
+        price: number;
+    }[];
+    total: number;
+    amountPaid: number;
+    change: number;
 }
 
 export function printReceipt(sale: SaleData) {
-  const receiptContent = `
+    const receiptContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -79,7 +79,7 @@ export function printReceipt(sale: SaleData) {
     <body>
         <div class="receipt">
             <div class="header">
-                <img src="https://media-hosting.imagekit.io//1e8b128120244df3/ROBBYSBURGUER%20REDONDO.png?Expires=1834253300&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=2PUlfSXADIK2J56ylWkfWvkLXYSbVuZYQRWlsAKCLoAxpmsp~-dzMgWikCrSrVwWyhFUl-1V2WLlya843Sx4P913q9~jkFblxJGgnJTvLR0l9b8RN2aC5aRPLPKL1t76I1bQXzC56HHLSXV3PTrxnzjxB7lSCw1~rYvwqppryGX3YjzfODICNR60s159ck8JwX83IZnLauLCuD9x2oHvmZa4xW80KAYIN6v2PptWKdMKrRE7WxuMCm0hx1xohoH07IFgNWzBpkBCCVAPbPO2qIBmrdK4mCxnsi9PMcR8gDm~Nnk7STcNvywLt5IS-SNJOMcNRjG6lvxZGpL-ZmqP1g__" alt="Logo" class="logo">
+                <img src="${window.location.origin}/LOGO.png" alt="Logo" class="logo">
                 <h2>TICKET DE VENTA</h2>
                 <p>${sale.timestamp.toLocaleDateString()} ${sale.timestamp.toLocaleTimeString()}</p>
                 <p>Folio: #${sale.id}</p>
@@ -121,27 +121,27 @@ export function printReceipt(sale: SaleData) {
     </html>
   `;
 
-  try {
-    const receiptWindow = window.open('', '_blank', 'width=300,height=600');
-    if (receiptWindow) {
-      receiptWindow.document.open();
-      receiptWindow.document.write(receiptContent);
-      receiptWindow.document.close();
-      receiptWindow.setTimeout(() => {
-        try {
-          receiptWindow.print();
-        } catch (printError) {
-          console.error('Error printing receipt:', printError);
-          alert('Error al imprimir el ticket. Por favor, intente de nuevo.');
+    try {
+        const receiptWindow = window.open('', '_blank', 'width=300,height=600');
+        if (receiptWindow) {
+            receiptWindow.document.open();
+            receiptWindow.document.write(receiptContent);
+            receiptWindow.document.close();
+            receiptWindow.setTimeout(() => {
+                try {
+                    receiptWindow.print();
+                } catch (printError) {
+                    console.error('Error printing receipt:', printError);
+                    alert('Error al imprimir el ticket. Por favor, intente de nuevo.');
+                }
+            }, 1000);
+        } else {
+            throw new Error('Could not open receipt window');
         }
-      }, 1000);
-    } else {
-      throw new Error('Could not open receipt window');
+    } catch (error) {
+        console.error('Error creating receipt:', error);
+        alert('Error al generar el ticket. Por favor, revise si tiene bloqueados los popups.');
     }
-  } catch (error) {
-    console.error('Error creating receipt:', error);
-    alert('Error al generar el ticket. Por favor, revise si tiene bloqueados los popups.');
-  }
 }
 
 export const generateDailyReport = (sales: SaleData[]) => {
@@ -204,11 +204,11 @@ export const generateDailyReport = (sales: SaleData[]) => {
                 <div class="business-name">Robby's Burger</div>
                 <h2>REPORTE DE CORTE DE CAJA DEL DÍA</h2>
                 <p>Fecha: ${new Date(sales[0].timestamp).toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit', 
-                    year: 'numeric',
-                    timeZone: 'America/Los_Angeles'
-                })}</p>
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'America/Los_Angeles'
+    })}</p>
             </div>
             
             <div class="sales">
@@ -227,10 +227,10 @@ export const generateDailyReport = (sales: SaleData[]) => {
                             <tr>
                                 <td>#${sale.id}</td>
                                 <td>${new Date(sale.timestamp).toLocaleString('es-ES', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZone: 'America/Los_Angeles'
-                                })}</td>
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Los_Angeles'
+    })}</td>
                                 <td>${sale.items.map(item => `${item.name} (${item.quantity})`).join(', ')}</td>
                                 <td>$${sale.total.toFixed(2)}</td>
                             </tr>
@@ -253,13 +253,13 @@ export const generateDailyReport = (sales: SaleData[]) => {
     if (!reportWindow) {
         throw new Error('No se pudo abrir la ventana del reporte. Verifique que no tenga bloqueados los popups.');
     }
-    
+
     reportWindow.document.write(closeReceipt);
     reportWindow.document.close();
-    
+
     setTimeout(() => {
         reportWindow.print();
-        reportWindow.onafterprint = function() {
+        reportWindow.onafterprint = function () {
             reportWindow.close();
         };
     }, 1000);
