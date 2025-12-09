@@ -2,22 +2,38 @@
 
 import { useState, useEffect } from 'react';
 
+const TIMEZONE = 'America/Hermosillo';
+
 export default function Clock() {
-  const [time, setTime] = useState(new Date());
+  const [timeString, setTimeString] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
+    const updateTime = () => {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString('es-MX', {
+        timeZone: TIMEZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      setTimeString(formatted);
+    };
+
+    // Set initial time on client mount
+    updateTime();
+
+    const timer = setInterval(updateTime, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
-  const hours = time.getHours().toString().padStart(2, '0');
-  const minutes = time.getMinutes().toString().padStart(2, '0');
-  const seconds = time.getSeconds().toString().padStart(2, '0');
+  // Show placeholder during SSR to avoid hydration mismatch
+  if (!timeString) {
+    return <span>--:--:--</span>;
+  }
 
   return (
-    <span>{`${hours}:${minutes}:${seconds}`}</span>
+    <span>{timeString}</span>
   );
-} 
+}
