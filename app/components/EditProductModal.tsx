@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+
 import { ProductType } from '../types';
 import ConfirmDialog from './ConfirmDialog';
 
